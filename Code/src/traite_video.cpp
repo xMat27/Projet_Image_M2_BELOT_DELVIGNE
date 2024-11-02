@@ -69,94 +69,19 @@ int main(int argc, char* argv[])
         }
       }
 
-      // // Création de la mosaïque de la frame courante
-      // Mat frameMosa;
-      // frameMosa.create(frame_height, frame_width, CV_8UC3);
-      // double moyenne_r, moyenne_g, moyenne_b;
-      // for(int i=0;i<nb_h;i++){
-      //   for(int j=0;j<nb_w;j++){
-      //     moyenne_r=0;
-      //     moyenne_g=0;
-      //     moyenne_b=0;
-      //     for (int x = 0; x < taille_imagette; x++) {
-      //       for (int y = 0; y < taille_imagette; y++) {
-      //         int pixel_index = (i * taille_imagette * frame_width*3) + (x * frame_width*3) + (j * taille_imagette*3) + y*3;
-      //         moyenne_r += ImgIn[pixel_index + 0];
-      //         moyenne_g += ImgIn[pixel_index + 1];
-      //         moyenne_b += ImgIn[pixel_index + 2];
-      //       }
-      //     }
-      //     moyenne_r=moyenne_r/(taille_imagette*taille_imagette);
-      //     moyenne_g=moyenne_g/(taille_imagette*taille_imagette);
-      //     moyenne_b=moyenne_b/(taille_imagette*taille_imagette);
-      //     char* acc;
-      //     if (nbFrameIntacte==-1 || compteurFrame < nbFrameIntacte){ // Si l'option n'est pas coché dans l'application, cette condition sera vrai
-      //       int indice=0;
-      //       acc = (char*)nom[0].c_str();
-      //       double stock = abs(moyenne_r-moy_r[0])+abs(moyenne_g-moy_g[0])+abs(moyenne_b-moy_b[0]);
-      //       for(int b=1;b<nbImagette;b++){
-      //         if(abs(moyenne_r-moy_r[b])+abs(moyenne_g-moy_g[b])+abs(moyenne_b-moy_b[b]) < stock){
-      //           stock=abs(moyenne_r-moy_r[b])+abs(moyenne_g-moy_g[b])+abs(moyenne_b-moy_b[b]);
-      //           acc=(char*)nom[b].c_str();
-      //           indice=b;
-      //         }       
-      //       }
-      //       if (nbFrameIntacte != -1){ // Seulement dans le cas de l'optimisation
-      //         if (std::find(alreadyUsed.begin(), alreadyUsed.end(), indice) == alreadyUsed.end()){ // On ajoute si l'élément n'est pas déjà présent
-      //           alreadyUsed.push_back(indice);
-      //         }
-      //       }
-      //     }else{ // Seulement si l'option d'optimisation est cochée dans l'application et qu'on a passé les frames intactes. A partir de là on utilise plus que les imagettes déjà utilisées
-      //       int indice=alreadyUsed[0];
-      //       acc = (char*)nom[alreadyUsed[0]].c_str();
-      //       double stock = abs(moyenne_r-moy_r[alreadyUsed[0]])+abs(moyenne_g-moy_g[alreadyUsed[0]])+abs(moyenne_b-moy_b[alreadyUsed[0]]);
-      //       for (int a = 1 ; a < alreadyUsed.size() ; a++){
-      //         int b = alreadyUsed[a];
-      //         if(abs(moyenne_r-moy_r[b])+abs(moyenne_g-moy_g[b])+abs(moyenne_b-moy_b[b]) < stock){
-      //           stock=abs(moyenne_r-moy_r[b])+abs(moyenne_g-moy_g[b])+abs(moyenne_b-moy_b[b]);
-      //           acc=(char*)nom[b].c_str();
-      //           indice=b;
-      //         }       
-      //       }
-      //     }
-
-      //     char* res = new char[strlen(acc) + strlen(repertoireImagette) + 2];
-      //     strcpy(res, repertoireImagette);
-      //     strcat(res, "/");
-      //     strcat(res, acc);
-
-
-      //     OCTET * Imgacc;
-      //     allocation_tableau(Imgacc, OCTET,taille_imagette*taille_imagette*3);
-      //     lire_image_ppm(res,Imgacc,taille_imagette*taille_imagette);
-      //     for(int z=0;z<taille_imagette;z++){
-      //       for(int k=0;k<taille_imagette;k++){
-      //         int pixel_index_out = i*taille_imagette*frame_width*3 + z*frame_width*3 + j*taille_imagette*3 + k*3;
-      //         int pixel_index_acc = z*taille_imagette*3 + k*3;
-      //         ImgOut[pixel_index_out+0] = Imgacc[pixel_index_acc+0];
-      //         ImgOut[pixel_index_out+1] = Imgacc[pixel_index_acc+1];
-      //         ImgOut[pixel_index_out+2] = Imgacc[pixel_index_acc+2];
-      //       }        
-      //     }
-      //     free(Imgacc);
-      //   }
-      //}
+    
 
       Mat frameTraite;
       frameTraite.create(frame_height, frame_width, CV_8UC3);
-      for (int x = 0; x < frame.rows; x++) {
-        for (int y = 0; y < frame.cols; y++) {
+      for (int x = 1; x < frame.rows - 1; x++) {
+        for (int y = 1; y < frame.cols - 1; y++) {
 
-            ImgOut[x*frame_width*3 + y*3+0] = ImgIn[x*frame_width*3 + y*3+0];
-            ImgOut[x*frame_width*3 + y*3+1] = ImgIn[x*frame_width*3 + y*3+1];
-            ImgOut[x*frame_width*3 + y*3+2] = ImgIn[x*frame_width*3 + y*3+2];
+            ImgOut[x*frame_width*3 + y*3+0] = (ImgIn[x*frame_width*3 + y*3+0] + ImgIn[(x+1)*frame_width*3 + y*3+0] + ImgIn[(x-1)*frame_width*3 + y*3+0] + ImgIn[(x+1)*frame_width*3 + (y+1)*3+0] + ImgIn[(x-1)*frame_width*3 + (y-1)*3+0] + ImgIn[(x)*frame_width*3 + (y+1)*3+0] + ImgIn[(x+1)*frame_width*3 + (y-1)*3+0] + ImgIn[(x-1)*frame_width*3 + (y+1)*3+0] + ImgIn[(x)*frame_width*3 + (y-1)*3+0])/9;
+            ImgOut[x*frame_width*3 + y*3+1] = (ImgIn[x*frame_width*3 + y*3+1] + ImgIn[(x+1)*frame_width*3 + y*3+1] + ImgIn[(x-1)*frame_width*3 + y*3+1] + ImgIn[(x+1)*frame_width*3 + (y+1)*3+1] + ImgIn[(x-1)*frame_width*3 + (y-1)*3+1] + ImgIn[(x)*frame_width*3 + (y+1)*3+1] + ImgIn[(x+1)*frame_width*3 + (y-1)*3+1] + ImgIn[(x-1)*frame_width*3 + (y+1)*3+1] + ImgIn[(x)*frame_width*3 + (y-1)*3+1])/9;
+            ImgOut[x*frame_width*3 + y*3+2] = (ImgIn[x*frame_width*3 + y*3+2] + ImgIn[(x+1)*frame_width*3 + y*3+2] + ImgIn[(x-1)*frame_width*3 + y*3+2] + ImgIn[(x+1)*frame_width*3 + (y+1)*3+2] + ImgIn[(x-1)*frame_width*3 + (y-1)*3+2] + ImgIn[(x)*frame_width*3 + (y+1)*3+2] + ImgIn[(x+1)*frame_width*3 + (y-1)*3+2] + ImgIn[(x-1)*frame_width*3 + (y+1)*3+2] + ImgIn[(x)*frame_width*3 + (y-1)*3+2])/9;
         }
       }
-
-      // if (compteurFrame < nbFrameIntacte){
-      //   ++compteurFrame;
-      //   cout<<"Nb imagettes jusque là : " << alreadyUsed.size()<<endl; // Affiche le nombre d'imagette qui ont été utilisé jusqu'à la frame courante. A la fin frame intacte, ce sera le nombre final d'imagettes pour les frames suivantes
-      // }    
+   
 
       // // Ecrire l'image mosaique dans la nouvelle frame
       for (int n = 0 ; n < frame_height ; n++){
