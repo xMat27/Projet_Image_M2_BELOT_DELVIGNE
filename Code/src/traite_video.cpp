@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
 
       videoTraite.write(frameTraite);
       //imshow("Frame", frameTraite);
-      cv::imwrite("frame_output.jpg", frameTraite);
+      cv::imwrite("frame_moy.jpg", frameTraite);
       std::cout << "Une nouvelle frame produite (" << nbFrame << ")\n";
       nbFrame++;
 
