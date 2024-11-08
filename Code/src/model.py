@@ -19,7 +19,7 @@ height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 fps = int(cap.get(cv2.CAP_PROP_FPS))
 
 # Configurer la vidéo de sortie avec VideoWriter
-output_path = "video_output.mp4"
+output_path = "video_flou.mp4"
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec vidéo
 out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
@@ -35,11 +35,17 @@ while cap.isOpened():
     # Dessiner les boîtes englobantes sur la frame
     for box in results[0].boxes:
         x1, y1, x2, y2 = map(int, box.xyxy[0])  # Extraire les coordonnées de la boîte
-        confidence = box.conf[0]  # Confiance de la détection
 
-        # Dessiner la boîte englobante et ajouter la confiance
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        cv2.putText(frame, f"{confidence:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        # Extraire la région d'intérêt (ROI) pour flouter
+        roi = frame[(y1):(y2), (x1):(x2)]
+
+        # Appliquer le flou sur cette région
+        blurred_roi = cv2.GaussianBlur(roi, (5, 5), 0)  # Utiliser un flou gaussien
+        #temp = cv2.resize(roi, (4, 4), interpolation=cv2.INTER_LINEAR)
+        #blurred_roi = cv2.resize(temp, (x2 - x1, y2 - y1), interpolation=cv2.INTER_NEAREST)
+
+        # Remettre la zone floutée dans l'image
+        frame[(y1):(y2), (x1):(x2)] = blurred_roi
 
     # Écrire la frame annotée dans la vidéo de sortie
     out.write(frame)
