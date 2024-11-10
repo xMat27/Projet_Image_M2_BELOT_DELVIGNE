@@ -22,7 +22,7 @@ fps = int(cap.get(cv2.CAP_PROP_FPS))
 output_path = "video_blur.mp4"
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")  
 out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-scale_factor = 1.3
+scale_factor = 1.5
 
 while cap.isOpened():
     ret, frame = cap.read()  
