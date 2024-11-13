@@ -5,7 +5,7 @@ from ultralytics import YOLO
 model = YOLO("yolov10n-face.pt")  # Utilisez un modèle compatible
 
 # Charger la vidéo d'entrée
-input_path = "videos/Ronaldo_cut.avi"
+input_path = "videoYOLO/video_melange.mp4"
 cap = cv2.VideoCapture(input_path)
 
 # Vérifier si la vidéo s'ouvre correctement
@@ -19,7 +19,7 @@ height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 fps = int(cap.get(cv2.CAP_PROP_FPS))
 
 # Configurer la vidéo de sortie avec VideoWriter
-output_path = "video_output.mp4"
+output_path = "detect_melange.mp4"
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec vidéo
 out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 scale_factor = 1.3
