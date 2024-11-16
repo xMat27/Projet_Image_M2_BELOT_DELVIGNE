@@ -25,15 +25,14 @@ def load_video():
     filepath = filedialog.askopenfilename(filetypes=[("Video Files", "*.mp4;*.avi;*.mov")])
     if filepath:
         video_capture = cv2.VideoCapture(filepath)
-        process_video()
 
 # Traiter une vidéo
-def process_video():
+def shuffle_video():
     global video_capture, processed_frame
     if not video_capture:
         return
 
-    def update_frame():
+    def update_frameS():
         global frame, processed_frame
         ret, frame = video_capture.read()
         if not ret:
@@ -59,9 +58,81 @@ def process_video():
             processed_frame[y1:y2, x1:x2] = pixels.reshape(roi.shape)
 
         show_frame(processed_frame)
-        root.after(30, update_frame)
+        root.after(30, update_frameS)
 
-    update_frame()
+    update_frameS()
+
+def blur_video():
+    global video_capture, processed_frame
+    if not video_capture:
+        return
+
+    def update_frameB():
+        global frame, processed_frame
+        ret, frame = video_capture.read()
+        if not ret:
+            video_capture.release()
+            return
+        
+        processed_frame = frame.copy()
+        results = model(frame)
+
+        for box in results[0].boxes:
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            w, h = x2 - x1, y2 - y1
+            x1 = max(0, int(x1 - (scale_factor - 1) * w / 2))
+            y1 = max(0, int(y1 - (scale_factor - 1) * h / 2))
+            x2 = min(frame.shape[1], int(x2 + (scale_factor - 1) * w / 2))
+            y2 = min(frame.shape[0], int(y2 + (scale_factor - 1) * h / 2))
+            
+            roi = processed_frame[y1:y2, x1:x2]
+            # Mélange des pixels de la boîte (par exemple)
+            blurred_roi = cv2.GaussianBlur(roi, (51, 51), 0)  
+    
+            processed_frame[(y1):(y2), (x1):(x2)] = blurred_roi
+            
+
+        show_frame(processed_frame)
+        root.after(30, update_frameB)
+
+    update_frameB()
+
+def pixel_video():
+    global video_capture, processed_frame
+    if not video_capture:
+        return
+
+    def update_frameP():
+        global frame, processed_frame
+        ret, frame = video_capture.read()
+        if not ret:
+            video_capture.release()
+            return
+        
+        processed_frame = frame.copy()
+        results = model(frame)
+
+        for box in results[0].boxes:
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            w, h = x2 - x1, y2 - y1
+            x1 = max(0, int(x1 - (scale_factor - 1) * w / 2))
+            y1 = max(0, int(y1 - (scale_factor - 1) * h / 2))
+            x2 = min(frame.shape[1], int(x2 + (scale_factor - 1) * w / 2))
+            y2 = min(frame.shape[0], int(y2 + (scale_factor - 1) * h / 2))
+            
+            roi = processed_frame[y1:y2, x1:x2]
+            # Mélange des pixels de la boîte (par exemple)
+            temp = cv2.resize(roi, (4, 4), interpolation=cv2.INTER_LINEAR)
+            pixel_roi = cv2.resize(temp, (x2 - x1, y2 - y1), interpolation=cv2.INTER_NEAREST) 
+    
+            processed_frame[(y1):(y2), (x1):(x2)] = pixel_roi
+            
+
+        show_frame(processed_frame)
+        root.after(30, update_frameP)
+
+    update_frameP()
+
 
 # Sauvegarder une vidéo traitée
 def save_video():
@@ -123,6 +194,15 @@ def show_frame(image):
 # Widgets de l'interface
 btn_load_video = tk.Button(root, text="Charger une vidéo", command=load_video)
 btn_load_video.pack()
+
+btn_procS_video = tk.Button(root, text="Traiter une vidéo (mélange)", command=shuffle_video)
+btn_procS_video.pack()
+
+btn_procB_video = tk.Button(root, text="Traiter une vidéo (flou)", command=blur_video)
+btn_procB_video.pack()
+
+btn_procP_video = tk.Button(root, text="Traiter une vidéo (pixel)", command=pixel_video)
+btn_procP_video.pack()
 
 btn_save_video = tk.Button(root, text="Sauvegarder la vidéo", command=save_video)
 btn_save_video.pack()
