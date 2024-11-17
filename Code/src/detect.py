@@ -19,7 +19,7 @@ height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 fps = int(cap.get(cv2.CAP_PROP_FPS))
 
 # Configurer la vidéo de sortie avec VideoWriter
-output_path = "detect_melange.mp4"
+output_path = "detect.mp4"
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec vidéo
 out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 scale_factor = 1.3

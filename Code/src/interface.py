@@ -36,7 +36,7 @@ def shuffle_video():
     if not video_capture:
         return
 
-    output_filepath = filedialog.asksaveasfilename(defaultextension=".mp4",
+    output_filepath = filedialog.asksaveasfilename(defaultextension=".avi",
                                                    filetypes=[("MP4 files", "*.mp4"),
                                                               ("AVI files", "*.avi")])
     if not output_filepath:
