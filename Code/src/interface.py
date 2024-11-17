@@ -21,16 +21,37 @@ processed_frame = None
 
 # Charger une vidéo
 def load_video():
-    global video_capture
-    filepath = filedialog.askopenfilename(filetypes=[("Video Files", "*.mp4;*.avi;*.mov")])
+    global video_capture, frame
+    filepath = filedialog.askopenfilename(defaultextension=".mp4",
+                                          filetypes=[("MP4 files", "*.mp4"),
+                                                     ("AVI files", "*.avi")])
     if filepath:
         video_capture = cv2.VideoCapture(filepath)
+        ret, frame = video_capture.read()
+        show_frame(frame)
 
 # Traiter une vidéo
 def shuffle_video():
-    global video_capture, processed_frame
+    global video_capture, output_writer, processed_frame
     if not video_capture:
         return
+
+    output_filepath = filedialog.asksaveasfilename(defaultextension=".mp4",
+                                                   filetypes=[("MP4 files", "*.mp4"),
+                                                              ("AVI files", "*.avi")])
+    if not output_filepath:
+        return
+
+    # Obtenir les propriétés de la vidéo
+    frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(video_capture.get(cv2.CAP_PROP_FPS))
+
+    # Initialiser VideoWriter
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    output_writer = cv2.VideoWriter(output_filepath, fourcc, fps, (frame_width, frame_height))
+
+    video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     def update_frameS():
         global frame, processed_frame
@@ -59,13 +80,32 @@ def shuffle_video():
 
         show_frame(processed_frame)
         root.after(30, update_frameS)
+        output_writer.write(processed_frame)
 
+    output_writer.release()
     update_frameS()
 
 def blur_video():
-    global video_capture, processed_frame
+    global video_capture, output_writer, processed_frame
     if not video_capture:
         return
+
+    output_filepath = filedialog.asksaveasfilename(defaultextension=".mp4",
+                                                   filetypes=[("MP4 files", "*.mp4"),
+                                                              ("AVI files", "*.avi")])
+    if not output_filepath:
+        return
+
+    # Obtenir les propriétés de la vidéo
+    frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(video_capture.get(cv2.CAP_PROP_FPS))
+
+    # Initialiser VideoWriter
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    output_writer = cv2.VideoWriter(output_filepath, fourcc, fps, (frame_width, frame_height))
+
+    video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     def update_frameB():
         global frame, processed_frame
@@ -94,13 +134,33 @@ def blur_video():
 
         show_frame(processed_frame)
         root.after(30, update_frameB)
+        output_writer.write(processed_frame)
 
+    output_writer.release()
     update_frameB()
 
 def pixel_video():
-    global video_capture, processed_frame
+    
+    global video_capture, output_writer, processed_frame
     if not video_capture:
         return
+
+    output_filepath = filedialog.asksaveasfilename(defaultextension=".mp4",
+                                                   filetypes=[("MP4 files", "*.mp4"),
+                                                              ("AVI files", "*.avi")])
+    if not output_filepath:
+        return
+
+    # Obtenir les propriétés de la vidéo
+    frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(video_capture.get(cv2.CAP_PROP_FPS))
+
+    # Initialiser VideoWriter
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    output_writer = cv2.VideoWriter(output_filepath, fourcc, fps, (frame_width, frame_height))
+
+    video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     def update_frameP():
         global frame, processed_frame
@@ -130,6 +190,9 @@ def pixel_video():
 
         show_frame(processed_frame)
         root.after(30, update_frameP)
+        output_writer.write(processed_frame)
+
+    output_writer.release()
 
     update_frameP()
 
@@ -204,8 +267,8 @@ btn_procB_video.pack()
 btn_procP_video = tk.Button(root, text="Traiter une vidéo (pixel)", command=pixel_video)
 btn_procP_video.pack()
 
-btn_save_video = tk.Button(root, text="Sauvegarder la vidéo", command=save_video)
-btn_save_video.pack()
+# btn_save_video = tk.Button(root, text="Sauvegarder la vidéo", command=save_video)
+# btn_save_video.pack()
 
 label_video = tk.Label(root)
 label_video.pack()
