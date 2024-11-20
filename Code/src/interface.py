@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import *
 from tkinter import filedialog
 import cv2
 from ultralytics import YOLO
@@ -18,17 +19,32 @@ scale_factor = 1.1
 random_seed = 42
 frame = None
 processed_frame = None
+boxes = []
 
 # Charger une vidéo
 def load_video():
-    global video_capture, frame
+    global video_capture, frame, processed_frame
     filepath = filedialog.askopenfilename(defaultextension=".mp4",
                                           filetypes=[("MP4 files", "*.mp4"),
                                                      ("AVI files", "*.avi")])
     if filepath:
         video_capture = cv2.VideoCapture(filepath)
         ret, frame = video_capture.read()
-        show_frame(frame)
+        processed_frame = frame.copy()
+        results = model(frame)
+        i = 0
+
+        for box in results[0].boxes:
+            i = i+1
+            x1, y1, x2, y2 = map(int, box.xyxy[0])  # Obtenir les coordonnées de la boîte
+            boxes.append([x1, y1, x2, y2])
+            
+
+            # Dessiner la boîte sur l'image
+            cv2.rectangle(processed_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Dessiner en vert
+            cv2.putText(processed_frame, f"{i}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+        show_frame(processed_frame)
 
 # Traiter une vidéo
 def shuffle_video():
@@ -266,6 +282,11 @@ btn_procB_video.pack()
 
 btn_procP_video = tk.Button(root, text="Traiter une vidéo (pixel)", command=pixel_video)
 btn_procP_video.pack()
+
+user_Entry = Entry(root,bg="white")
+user = Label(root, text = "numéro de la boîte")
+user.pack()
+user_Entry.pack() 
 
 # btn_save_video = tk.Button(root, text="Sauvegarder la vidéo", command=save_video)
 # btn_save_video.pack()
