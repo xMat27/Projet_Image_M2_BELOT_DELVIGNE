@@ -19,7 +19,7 @@ scale_factor = 1.1
 random_seed = 42
 frame = None
 processed_frame = None
-boxes = []
+trackers = []
 
 # Charger une vidéo
 def load_video():
@@ -37,8 +37,13 @@ def load_video():
         for box in results[0].boxes:
             i = i+1
             x1, y1, x2, y2 = map(int, box.xyxy[0])  # Obtenir les coordonnées de la boîte
-            boxes.append([x1, y1, x2, y2])
-            
+            #boxes.append([x1, y1, x2, y2])
+
+            # Créer un tracker pour chaque visage détecté
+            tracker = cv2.legacy.TrackerCSRT_create()
+
+            trackers.append(tracker)
+            tracker.init(frame, (x1, y1, x2 - x1, y2 - y1)) 
 
             # Dessiner la boîte sur l'image
             cv2.rectangle(processed_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Dessiner en vert
@@ -52,7 +57,7 @@ def shuffle_video():
     if not video_capture:
         return
 
-    output_filepath = filedialog.asksaveasfilename(defaultextension=".avi",
+    output_filepath = filedialog.asksaveasfilename(defaultextension=".mp4",
                                                    filetypes=[("MP4 files", "*.mp4"),
                                                               ("AVI files", "*.avi")])
     if not output_filepath:
@@ -72,34 +77,55 @@ def shuffle_video():
     def update_frameS():
         global frame, processed_frame
         ret, frame = video_capture.read()
+        
         if not ret:
             video_capture.release()
-            return
-        
-        processed_frame = frame.copy()
-        results = model(frame)
+            output_writer.release()
+            print("Processing complete.")
 
-        for box in results[0].boxes:
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-            w, h = x2 - x1, y2 - y1
-            x1 = max(0, int(x1 - (scale_factor - 1) * w / 2))
-            y1 = max(0, int(y1 - (scale_factor - 1) * h / 2))
-            x2 = min(frame.shape[1], int(x2 + (scale_factor - 1) * w / 2))
-            y2 = min(frame.shape[0], int(y2 + (scale_factor - 1) * h / 2))
-            
+            return
+
+        processed_frame = frame.copy()
+        
+    
+        success, bbox = trackers[int(user_Entry.get())-1].update(processed_frame)
+        if success:
+            x1, y1, w, h = map(int, bbox)
+            x2, y2 = x1 + w, y1 + h
+
+            # Extraire la région d'intérêt
             roi = processed_frame[y1:y2, x1:x2]
-            # Mélange des pixels de la boîte (par exemple)
+
+            # Mélanger les pixels dans la boîte détectée
             pixels = roi.reshape(-1, 3)
-            np.random.seed(random_seed)
             np.random.shuffle(pixels)
-            processed_frame[y1:y2, x1:x2] = pixels.reshape(roi.shape)
+            roi_mixed = pixels.reshape(roi.shape)
+
+            # Remettre la ROI mélangée dans l'image originale
+            processed_frame[y1:y2, x1:x2] = roi_mixed
+
+
+        # for box in results[0].boxes:
+        #     x1, y1, x2, y2 = map(int, box.xyxy[0])
+        #     w, h = x2 - x1, y2 - y1
+        #     x1 = max(0, int(x1 - (scale_factor - 1) * w / 2))
+        #     y1 = max(0, int(y1 - (scale_factor - 1) * h / 2))
+        #     x2 = min(frame.shape[1], int(x2 + (scale_factor - 1) * w / 2))
+        #     y2 = min(frame.shape[0], int(y2 + (scale_factor - 1) * h / 2))
+            
+        #     roi = processed_frame[y1:y2, x1:x2]
+        #     # Mélange des pixels de la boîte (par exemple)
+        #     pixels = roi.reshape(-1, 3)
+        #     np.random.seed(random_seed)
+        #     np.random.shuffle(pixels)
+        #     processed_frame[y1:y2, x1:x2] = pixels.reshape(roi.shape)
 
         show_frame(processed_frame)
         root.after(30, update_frameS)
         output_writer.write(processed_frame)
 
-    output_writer.release()
     update_frameS()
+    
 
 def blur_video():
     global video_capture, output_writer, processed_frame
@@ -128,6 +154,7 @@ def blur_video():
         ret, frame = video_capture.read()
         if not ret:
             video_capture.release()
+            output_writer.release()
             return
         
         processed_frame = frame.copy()
@@ -152,8 +179,8 @@ def blur_video():
         root.after(30, update_frameB)
         output_writer.write(processed_frame)
 
-    output_writer.release()
     update_frameB()
+    
 
 def pixel_video():
     
@@ -183,6 +210,7 @@ def pixel_video():
         ret, frame = video_capture.read()
         if not ret:
             video_capture.release()
+            output_writer.release()
             return
         
         processed_frame = frame.copy()
@@ -208,7 +236,6 @@ def pixel_video():
         root.after(30, update_frameP)
         output_writer.write(processed_frame)
 
-    output_writer.release()
 
     update_frameP()
 
@@ -284,7 +311,7 @@ btn_procP_video = tk.Button(root, text="Traiter une vidéo (pixel)", command=pix
 btn_procP_video.pack()
 
 user_Entry = Entry(root,bg="white")
-user = Label(root, text = "numéro de la boîte")
+user = Label(root, text = "Numéro de la boîte")
 user.pack()
 user_Entry.pack() 
 
@@ -297,3 +324,4 @@ label_video.pack()
 # Lancer l'application
 
 root.mainloop()
+    
