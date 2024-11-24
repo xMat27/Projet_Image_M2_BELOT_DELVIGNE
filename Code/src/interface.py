@@ -40,7 +40,7 @@ def load_video():
             #boxes.append([x1, y1, x2, y2])
 
             # Créer un tracker pour chaque visage détecté
-            tracker = cv2.legacy.TrackerCSRT_create()
+            tracker = cv2.TrackerCSRT_create()
 
             trackers.append(tracker)
             tracker.init(frame, (x1, y1, x2 - x1, y2 - y1)) 
@@ -87,23 +87,40 @@ def shuffle_video():
 
         processed_frame = frame.copy()
         
-    
-        success, bbox = trackers[int(user_Entry.get())-1].update(processed_frame)
-        if success:
-            x1, y1, w, h = map(int, bbox)
-            x2, y2 = x1 + w, y1 + h
+        if int(user_Entry.get()) > 0:
+            success, bbox = trackers[int(user_Entry.get())-1].update(processed_frame)
+            if success:
+                x1, y1, w, h = map(int, bbox)
+                x2, y2 = x1 + w, y1 + h
 
-            # Extraire la région d'intérêt
-            roi = processed_frame[y1:y2, x1:x2]
+                # Extraire la région d'intérêt
+                roi = processed_frame[y1:y2, x1:x2]
 
-            # Mélanger les pixels dans la boîte détectée
-            pixels = roi.reshape(-1, 3)
-            np.random.shuffle(pixels)
-            roi_mixed = pixels.reshape(roi.shape)
+                # Mélanger les pixels dans la boîte détectée
+                pixels = roi.reshape(-1, 3)
+                np.random.shuffle(pixels)
+                roi_mixed = pixels.reshape(roi.shape)
 
-            # Remettre la ROI mélangée dans l'image originale
-            processed_frame[y1:y2, x1:x2] = roi_mixed
+                # Remettre la ROI mélangée dans l'image originale
+                processed_frame[y1:y2, x1:x2] = roi_mixed        
+        else:
+            for i, tracker in enumerate(trackers):
+                success, bbox = tracker.update(processed_frame)
+                if success:
+                    x1, y1, w, h = map(int, bbox)
+                    x2, y2 = x1 + w, y1 + h
 
+                    # Extraire la région d'intérêt
+                    roi = processed_frame[y1:y2, x1:x2]
+
+                    # Mélanger les pixels dans la boîte détectée
+                    pixels = roi.reshape(-1, 3)
+                    np.random.shuffle(pixels)
+                    roi_mixed = pixels.reshape(roi.shape)
+
+                    # Remettre la ROI mélangée dans l'image originale
+                    processed_frame[y1:y2, x1:x2] = roi_mixed
+            
 
         # for box in results[0].boxes:
         #     x1, y1, x2, y2 = map(int, box.xyxy[0])
@@ -159,8 +176,9 @@ def blur_video():
         
         processed_frame = frame.copy()
         results = model(frame)
-
-        for box in results[0].boxes:
+        if int(user_Entry.get()) > 0:
+            boxes = results[0].boxes
+            box = boxes[int(user_Entry.get())-1]
             x1, y1, x2, y2 = map(int, box.xyxy[0])
             w, h = x2 - x1, y2 - y1
             x1 = max(0, int(x1 - (scale_factor - 1) * w / 2))
@@ -173,6 +191,21 @@ def blur_video():
             blurred_roi = cv2.GaussianBlur(roi, (51, 51), 0)  
     
             processed_frame[(y1):(y2), (x1):(x2)] = blurred_roi
+
+        else :    
+            for box in results[0].boxes:
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                w, h = x2 - x1, y2 - y1
+                x1 = max(0, int(x1 - (scale_factor - 1) * w / 2))
+                y1 = max(0, int(y1 - (scale_factor - 1) * h / 2))
+                x2 = min(frame.shape[1], int(x2 + (scale_factor - 1) * w / 2))
+                y2 = min(frame.shape[0], int(y2 + (scale_factor - 1) * h / 2))
+                
+                roi = processed_frame[y1:y2, x1:x2]
+                # Mélange des pixels de la boîte (par exemple)
+                blurred_roi = cv2.GaussianBlur(roi, (51, 51), 0)  
+        
+                processed_frame[(y1):(y2), (x1):(x2)] = blurred_roi
             
 
         show_frame(processed_frame)
