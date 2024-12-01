@@ -6,6 +6,7 @@ import cv2
 from ultralytics import YOLO
 import numpy as np
 from PIL import Image, ImageTk
+import json
 
 root = tk.Tk()
 root.title("Détection et traitement avec YOLO")
@@ -55,7 +56,7 @@ def load_video():
 
 # Traiter une vidéo
 def shuffle_video():
-    global video_capture, output_writer, processed_frame
+    global video_capture, output_writer, processed_frame, video_boxes, frame_id
     if not video_capture:
         return
 
@@ -75,10 +76,14 @@ def shuffle_video():
     output_writer = cv2.VideoWriter(output_filepath, fourcc, fps, (frame_width, frame_height))
 
     video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    video_boxes = []
+    frame_id = 0
 
     def update_frameS():
-        global frame, processed_frame
+        global frame, processed_frame, frame_id
         ret, frame = video_capture.read()
+        
+        
         
         if not ret:
             video_capture.release()
@@ -101,11 +106,11 @@ def shuffle_video():
 
                     # Mélanger les pixels dans la boîte détectée
                     pixels = roi.reshape(-1, 3)
-                    np.random.shuffle(pixels)
-                    roi_mixed = pixels.reshape(roi.shape)
-
-                    # Remettre la ROI mélangée dans l'image originale
-                    processed_frame[y1:y2, x1:x2] = roi_mixed        
+                    seed = 42  # Définir une graine
+                    rng = np.random.default_rng(seed)
+                    permutation = rng.permutation(len(pixels))  # Générer une permutation
+                    pixels_mixed = pixels[permutation]          # Mélanger les pixels
+                    processed_frame[y1:y2, x1:x2] = pixels_mixed.reshape(roi.shape)        
             else:
                 for i, tracker in enumerate(trackers):
                     success, bbox = tracker.update(processed_frame)
@@ -118,13 +123,14 @@ def shuffle_video():
 
                         # Mélanger les pixels dans la boîte détectée
                         pixels = roi.reshape(-1, 3)
-                        np.random.shuffle(pixels)
-                        roi_mixed = pixels.reshape(roi.shape)
-
-                        # Remettre la ROI mélangée dans l'image originale
-                        processed_frame[y1:y2, x1:x2] = roi_mixed
-        else :      
-            results = model(frame)  
+                        seed = 42  # Définir une graine
+                        rng = np.random.default_rng(seed)
+                        permutation = rng.permutation(len(pixels))  # Générer une permutation
+                        pixels_mixed = pixels[permutation]          # Mélanger les pixels
+                        processed_frame[y1:y2, x1:x2] = pixels_mixed.reshape(roi.shape)
+        else : 
+            results = model(frame) 
+            frame_boxes = [] 
             if int(user_Entry.get()) > 0:
                 boxes = results[0].boxes
                 box = boxes[int(user_Entry.get())-1]
@@ -138,10 +144,13 @@ def shuffle_video():
                 roi = processed_frame[y1:y2, x1:x2]
                 # Mélange des pixels de la boîte (par exemple)
                 pixels = roi.reshape(-1, 3)
-                np.random.seed(random_seed)
-                np.random.shuffle(pixels)
-                processed_frame[y1:y2, x1:x2] = pixels.reshape(roi.shape)
+                seed = 42  # Définir une graine
+                rng = np.random.default_rng(seed)
+                permutation = rng.permutation(len(pixels))  # Générer une permutation
+                pixels_mixed = pixels[permutation]          # Mélanger les pixels
+                processed_frame[y1:y2, x1:x2] = pixels_mixed.reshape(roi.shape) 
             else :
+                frame_id += 1 
                 for box in results[0].boxes:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
                     w, h = x2 - x1, y2 - y1
@@ -150,15 +159,27 @@ def shuffle_video():
                     x2 = min(frame.shape[1], int(x2 + (scale_factor - 1) * w / 2))
                     y2 = min(frame.shape[0], int(y2 + (scale_factor - 1) * h / 2))
                     
+                    frame_boxes.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2})
+
+
                     roi = processed_frame[y1:y2, x1:x2]
                     # Mélange des pixels de la boîte (par exemple)
                     pixels = roi.reshape(-1, 3)
-                    np.random.seed(random_seed)
-                    np.random.shuffle(pixels)
-                    processed_frame[y1:y2, x1:x2] = pixels.reshape(roi.shape)       
+                    seed = 42  # Définir une graine
+                    rng = np.random.default_rng(seed)
+                    permutation = rng.permutation(len(pixels))  # Générer une permutation
+                    pixels_mixed = pixels[permutation]          # Mélanger les pixels
+                    processed_frame[y1:y2, x1:x2] = pixels_mixed.reshape(roi.shape) 
+                video_boxes.append({"frame_id": frame_id, "boxes": frame_boxes})      
         show_frame(processed_frame)
         root.after(30, update_frameS)
         output_writer.write(processed_frame)
+        with open("video_boxes_coordinates.json", "w") as json_file:
+            json.dump(video_boxes, json_file, indent=4)
+
+        print("Coordonnées des boîtes pour toute la vidéo écrites dans 'video_boxes_coordinates.json'")
+    
+    
 
     update_frameS()
     
@@ -319,7 +340,7 @@ def pixel_video():
                         pixel_roi = cv2.resize(temp, (x2 - x1, y2 - y1), interpolation=cv2.INTER_NEAREST) 
                         processed_frame[(y1):(y2), (x1):(x2)] = pixel_roi
         else :      
-            results = model(frame)  
+            results = model(frame) 
             if int(user_Entry.get()) > 0:
                 boxes = results[0].boxes
                 box = boxes[int(user_Entry.get())-1]
@@ -359,6 +380,84 @@ def pixel_video():
 
 
     update_frameP()
+
+def dechiffre():
+    global video_capture, output_writer, processed_frame, video_boxes, frame_id, data
+    if not video_capture:
+        return
+
+    output_filepath = filedialog.asksaveasfilename(defaultextension=".mp4",
+                                                   filetypes=[("MP4 files", "*.mp4"),
+                                                              ("AVI files", "*.avi")])
+    if not output_filepath:
+        return
+
+    # Obtenir les propriétés de la vidéo
+    frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(video_capture.get(cv2.CAP_PROP_FPS))
+
+    # Initialiser VideoWriter
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    output_writer = cv2.VideoWriter(output_filepath, fourcc, fps, (frame_width, frame_height))
+
+    video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    video_boxes = []
+    frame_id = 0
+
+    with open("video_boxes_coordinates.json", "r") as json_file:
+        data = json.load(json_file)
+
+    def get_boxes_for_frame(frame_id, data):
+        for frame in data:
+            if frame["frame_id"] == frame_id:
+                return frame["boxes"]  # Retourne la liste des boîtes
+        return []  # Si aucune boîte n'est trouvée pour la frame
+
+    def update_frameD():
+        global frame, processed_frame, frame_id, data
+        ret, frame = video_capture.read()
+        
+        
+        
+        if not ret:
+            video_capture.release()
+            output_writer.release()
+            print("Processing complete.")
+
+            return
+
+        processed_frame = frame.copy()
+
+        frame_id += 1 
+        boxes = get_boxes_for_frame(frame_id, data)
+        for box in boxes:
+            x1, y1, x2, y2 = box["x1"], box["y1"], box["x2"], box["y2"]
+
+            roi = processed_frame[y1:y2, x1:x2]
+            # Mélange des pixels de la boîte (par exemple)
+            pixels_mixed = roi.reshape(-1, 3)
+            seed = 42  # Définir une graine
+            num_pixels = len(pixels_mixed)
+
+            # Recréer la permutation originale avec la graine
+            rng = np.random.default_rng(seed)
+            recreated_permutation = rng.permutation(num_pixels)  # Recrée la permutation
+
+            # Inverser la permutation
+            inverse_permutation = np.argsort(recreated_permutation)
+
+            # Restaurer les pixels à l'ordre original
+            pixels_restored = pixels_mixed[inverse_permutation]
+            roi_restored = pixels_restored.reshape(roi.shape)
+
+            processed_frame[(y1):(y2), (x1):(x2)] = roi_restored   
+        show_frame(processed_frame)
+        root.after(30, update_frameD)
+        output_writer.write(processed_frame)
+    
+
+    update_frameD()
 
 
 # Sauvegarder une vidéo traitée
@@ -430,6 +529,9 @@ btn_procB_video.pack()
 
 btn_procP_video = tk.Button(root, text="Traiter une vidéo (pixel)", command=pixel_video)
 btn_procP_video.pack()
+
+btn_procD_video = tk.Button(root, text="Déchiffrer un mélange", command=dechiffre)
+btn_procD_video.pack()
 
 user_Entry = Entry(root,bg="white")
 user = Label(root, text = "Numéro de la boîte")
