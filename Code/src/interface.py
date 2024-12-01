@@ -23,10 +23,48 @@ frame = None
 processed_frame = None
 track = tk.IntVar()
 trackers = []
+tracker_histograms = []
+frame_counter=0
+
+def calculate_histogram(image, bbox):
+    x1, y1, w, h = map(int, bbox)
+    roi = image[y1:y1+h, x1:x1+w]
+    hist = cv2.calcHist([roi], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256])
+    cv2.normalize(hist, hist)
+    return hist
+
+def compare_histograms(hist1, hist2):
+    return cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
+
+def reset_tracker(processed_frame, tracker_index, original_hist):
+    global model, trackers, tracker_histograms
+    results = model(processed_frame)
+    best_similarity = 0
+    best_box = None
+
+    # Comparer chaque boîte détectée avec l'apparence originale
+    for box in results[0].boxes:
+        x1, y1, x2, y2 = map(int, box.xyxy[0])
+        bbox = (x1, y1, x2 - x1, y2 - y1)
+        hist = calculate_histogram(processed_frame, bbox)
+        similarity = compare_histograms(original_hist, hist)
+        print(f"similarity reset = {similarity}")
+        if similarity > best_similarity:
+            best_similarity = similarity
+            best_box = bbox
+
+    # Si une correspondance suffisante est trouvée, réinitialiser le tracker
+    if best_box and best_similarity > 0.8:  # Seuil de similarité ajustable
+        print(f"Réinitialisation du tracker {tracker_index}")
+        trackers[tracker_index] = cv2.TrackerCSRT_create()
+        trackers[tracker_index].init(processed_frame, best_box)
+        tracker_histograms[tracker_index] = calculate_histogram(processed_frame, best_box)
+    else:
+        print(f"Impossible de réinitialiser le tracker {tracker_index} : cible introuvable")
 
 # Charger une vidéo
 def load_video():
-    global video_capture, frame, processed_frame
+    global video_capture, frame, processed_frame,frame_counter
     filepath = filedialog.askopenfilename(defaultextension=".mp4",
                                           filetypes=[("MP4 files", "*.mp4"),
                                                      ("AVI files", "*.avi")])
@@ -36,6 +74,10 @@ def load_video():
         processed_frame = frame.copy()
         results = model(frame)
         i = 0
+
+        frame_counter=0
+        tracker_histograms.clear()
+        trackers.clear()
 
         for box in results[0].boxes:
             i = i+1
@@ -47,6 +89,7 @@ def load_video():
 
             trackers.append(tracker)
             tracker.init(frame, (x1, y1, x2 - x1, y2 - y1)) 
+            tracker_histograms.append(calculate_histogram(frame, (x1, y1, x2 - x1, y2 - y1)))
 
             # Dessiner la boîte sur l'image
             cv2.rectangle(processed_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Dessiner en vert
@@ -56,7 +99,7 @@ def load_video():
 
 # Traiter une vidéo
 def shuffle_video():
-    global video_capture, output_writer, processed_frame, video_boxes, frame_id
+    global video_capture, output_writer, processed_frame, video_boxes, frame_id,frame_counter
     if not video_capture:
         return
 
@@ -80,7 +123,7 @@ def shuffle_video():
     frame_id = 0
 
     def update_frameS():
-        global frame, processed_frame, frame_id
+        global frame, processed_frame, frame_id,frame_counter
         ret, frame = video_capture.read()
         
         
@@ -93,6 +136,7 @@ def shuffle_video():
             return
 
         processed_frame = frame.copy()
+        frame_counter+=1
 
         if track.get() == 1 :        
             if int(user_Entry.get()) > 0:
@@ -101,16 +145,30 @@ def shuffle_video():
                     x1, y1, w, h = map(int, bbox)
                     x2, y2 = x1 + w, y1 + h
 
-                    # Extraire la région d'intérêt
-                    roi = processed_frame[y1:y2, x1:x2]
+                    if frame_counter % 4 == 0:
+                        tracker_histograms[int(user_Entry.get())-1] = calculate_histogram(processed_frame, (x1, y1, w, h))
 
-                    # Mélanger les pixels dans la boîte détectée
-                    pixels = roi.reshape(-1, 3)
-                    seed = 42  # Définir une graine
-                    rng = np.random.default_rng(seed)
-                    permutation = rng.permutation(len(pixels))  # Générer une permutation
-                    pixels_mixed = pixels[permutation]          # Mélanger les pixels
-                    processed_frame[y1:y2, x1:x2] = pixels_mixed.reshape(roi.shape)        
+                    hist = calculate_histogram(processed_frame, bbox)
+                    similarity = compare_histograms(tracker_histograms[int(user_Entry.get())-1], hist)
+
+                    # Seuil de similarité pour considérer la région comme valide
+                    print(f"similarity = {similarity}")
+                    if similarity < 0.8:
+                        print(f"Tracker {int(user_Entry.get())-1}  a perdu la cible, tentative de réinitialisation...")
+                        reset_tracker(processed_frame, int(user_Entry.get())-1, tracker_histograms[int(user_Entry.get())-1])
+                        # Option : marquer la boîte ou réinitialiser le tracker
+                    else:
+
+                        # Extraire la région d'intérêt
+                        roi = processed_frame[y1:y2, x1:x2]
+
+                        # Mélanger les pixels dans la boîte détectée
+                        pixels = roi.reshape(-1, 3)
+                        seed = 42  # Définir une graine
+                        rng = np.random.default_rng(seed)
+                        permutation = rng.permutation(len(pixels))  # Générer une permutation
+                        pixels_mixed = pixels[permutation]          # Mélanger les pixels
+                        processed_frame[y1:y2, x1:x2] = pixels_mixed.reshape(roi.shape)        
             else:
                 for i, tracker in enumerate(trackers):
                     success, bbox = tracker.update(processed_frame)
