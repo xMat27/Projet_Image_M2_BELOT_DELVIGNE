@@ -137,6 +137,8 @@ def shuffle_video():
 
         processed_frame = frame.copy()
         frame_counter+=1
+        frame_id += 1 
+        frame_boxes = []
 
         if track.get() == 1 :        
             if int(user_Entry.get()) > 0:
@@ -144,6 +146,7 @@ def shuffle_video():
                 if success:
                     x1, y1, w, h = map(int, bbox)
                     x2, y2 = x1 + w, y1 + h
+                    frame_boxes.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2})
 
                     if frame_counter % 4 == 0:
                         tracker_histograms[int(user_Entry.get())-1] = calculate_histogram(processed_frame, (x1, y1, w, h))
@@ -168,13 +171,15 @@ def shuffle_video():
                         rng = np.random.default_rng(seed)
                         permutation = rng.permutation(len(pixels))  # Générer une permutation
                         pixels_mixed = pixels[permutation]          # Mélanger les pixels
-                        processed_frame[y1:y2, x1:x2] = pixels_mixed.reshape(roi.shape)        
+                        processed_frame[y1:y2, x1:x2] = pixels_mixed.reshape(roi.shape)
+                    video_boxes.append({"frame_id": frame_id, "boxes": frame_boxes})         
             else:
                 for i, tracker in enumerate(trackers):
                     success, bbox = tracker.update(processed_frame)
                     if success:
                         x1, y1, w, h = map(int, bbox)
                         x2, y2 = x1 + w, y1 + h
+                        frame_boxes.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2})
 
                         # Extraire la région d'intérêt
                         roi = processed_frame[y1:y2, x1:x2]
@@ -186,9 +191,9 @@ def shuffle_video():
                         permutation = rng.permutation(len(pixels))  # Générer une permutation
                         pixels_mixed = pixels[permutation]          # Mélanger les pixels
                         processed_frame[y1:y2, x1:x2] = pixels_mixed.reshape(roi.shape)
+                video_boxes.append({"frame_id": frame_id, "boxes": frame_boxes}) 
         else : 
-            results = model(frame) 
-            frame_boxes = [] 
+            results = model(frame)  
             if int(user_Entry.get()) > 0:
                 boxes = results[0].boxes
                 box = boxes[int(user_Entry.get())-1]
@@ -198,6 +203,7 @@ def shuffle_video():
                 y1 = max(0, int(y1 - (scale_factor - 1) * h / 2))
                 x2 = min(frame.shape[1], int(x2 + (scale_factor - 1) * w / 2))
                 y2 = min(frame.shape[0], int(y2 + (scale_factor - 1) * h / 2))
+                frame_boxes.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2})
                 
                 roi = processed_frame[y1:y2, x1:x2]
                 # Mélange des pixels de la boîte (par exemple)
@@ -207,8 +213,8 @@ def shuffle_video():
                 permutation = rng.permutation(len(pixels))  # Générer une permutation
                 pixels_mixed = pixels[permutation]          # Mélanger les pixels
                 processed_frame[y1:y2, x1:x2] = pixels_mixed.reshape(roi.shape) 
+                video_boxes.append({"frame_id": frame_id, "boxes": frame_boxes}) 
             else :
-                frame_id += 1 
                 for box in results[0].boxes:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
                     w, h = x2 - x1, y2 - y1
