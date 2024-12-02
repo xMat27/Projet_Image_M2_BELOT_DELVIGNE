@@ -25,6 +25,7 @@ track = tk.IntVar()
 trackers = []
 tracker_histograms = []
 frame_counter=0
+time_frame_replace = tk.IntVar()
 
 def calculate_histogram(image, bbox):
     x1, y1, w, h = map(int, bbox)
@@ -146,7 +147,7 @@ def shuffle_video():
                     x2, y2 = x1 + w, y1 + h
                     frame_boxes.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2})
 
-                    if frame_counter % 4 == 0:
+                    if frame_counter % int(rafraiche_Entry.get()) == 0:
                         tracker_histograms[int(user_Entry.get())-1] = calculate_histogram(processed_frame, (x1, y1, w, h))
 
                     hist = calculate_histogram(processed_frame, bbox)
@@ -154,7 +155,7 @@ def shuffle_video():
 
                     # Seuil de similarité pour considérer la région comme valide
                     print(f"similarity = {similarity}")
-                    if similarity < 0.8:
+                    if similarity < int(seuil_Entry.get()):
                         print(f"Tracker {int(user_Entry.get())-1}  a perdu la cible, tentative de réinitialisation...")
                         reset_tracker(processed_frame, int(user_Entry.get())-1, tracker_histograms[int(user_Entry.get())-1])
                         # Option : marquer la boîte ou réinitialiser le tracker
@@ -179,7 +180,7 @@ def shuffle_video():
                         x2, y2 = x1 + w, y1 + h
                         frame_boxes.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2})
 
-                        if frame_counter % 4 == 0:
+                        if frame_counter % int(rafraiche_Entry.get()) == 0:
                             tracker_histograms[i] = calculate_histogram(processed_frame, (x1, y1, w, h))
 
                         hist = calculate_histogram(processed_frame, bbox)
@@ -187,7 +188,7 @@ def shuffle_video():
 
                         # Seuil de similarité pour considérer la région comme valide
                         print(f"similarity = {similarity}")
-                        if similarity < 0.8:
+                        if similarity < int(seuil_Entry.get()):
                             print(f"Tracker {i}  a perdu la cible, tentative de réinitialisation...")
                             reset_tracker(processed_frame, i, tracker_histograms[i])
                             # Option : marquer la boîte ou réinitialiser le tracker
@@ -301,7 +302,7 @@ def blur_video():
                     x1, y1, w, h = map(int, bbox)
                     x2, y2 = x1 + w, y1 + h
 
-                    if frame_counter % 4 == 0:
+                    if frame_counter % int(rafraiche_Entry.get()) == 0:
                         tracker_histograms[int(user_Entry.get())-1] = calculate_histogram(processed_frame, (x1, y1, w, h))
 
                     hist = calculate_histogram(processed_frame, bbox)
@@ -309,7 +310,7 @@ def blur_video():
 
                     # Seuil de similarité pour considérer la région comme valide
                     print(f"similarity = {similarity}")
-                    if similarity < 0.8:
+                    if similarity < int(seuil_Entry.get()):
                         print(f"Tracker {int(user_Entry.get())-1}  a perdu la cible, tentative de réinitialisation...")
                         reset_tracker(processed_frame, int(user_Entry.get())-1, tracker_histograms[int(user_Entry.get())-1])
                         # Option : marquer la boîte ou réinitialiser le tracker
@@ -326,7 +327,7 @@ def blur_video():
                         x1, y1, w, h = map(int, bbox)
                         x2, y2 = x1 + w, y1 + h
 
-                        if frame_counter % 4 == 0:
+                        if frame_counter % int(rafraiche_Entry.get()) == 0:
                             tracker_histograms[i] = calculate_histogram(processed_frame, (x1, y1, w, h))
 
                         hist = calculate_histogram(processed_frame, bbox)
@@ -334,7 +335,7 @@ def blur_video():
 
                         # Seuil de similarité pour considérer la région comme valide
                         print(f"similarity = {similarity}")
-                        if similarity < 0.8:
+                        if similarity < int(seuil_Entry.get()):
                             print(f"Tracker {i}  a perdu la cible, tentative de réinitialisation...")
                             reset_tracker(processed_frame, i, tracker_histograms[i])
                             # Option : marquer la boîte ou réinitialiser le tracker
@@ -425,7 +426,7 @@ def pixel_video():
                     x1, y1, w, h = map(int, bbox)
                     x2, y2 = x1 + w, y1 + h
 
-                    if frame_counter % 4 == 0:
+                    if frame_counter % int(rafraiche_Entry.get()) == 0:
                         tracker_histograms[int(user_Entry.get())-1] = calculate_histogram(processed_frame, (x1, y1, w, h))
 
                     hist = calculate_histogram(processed_frame, bbox)
@@ -433,7 +434,7 @@ def pixel_video():
 
                     # Seuil de similarité pour considérer la région comme valide
                     print(f"similarity = {similarity}")
-                    if similarity < 0.8:
+                    if similarity < int(seuil_Entry.get()):
                         print(f"Tracker {int(user_Entry.get())-1}  a perdu la cible, tentative de réinitialisation...")
                         reset_tracker(processed_frame, int(user_Entry.get())-1, tracker_histograms[int(user_Entry.get())-1])
                         # Option : marquer la boîte ou réinitialiser le tracker
@@ -451,7 +452,7 @@ def pixel_video():
                         x1, y1, w, h = map(int, bbox)
                         x2, y2 = x1 + w, y1 + h
 
-                        if frame_counter % 4 == 0:
+                        if frame_counter % int(rafraiche_Entry.get()) == 0:
                             tracker_histograms[i] = calculate_histogram(processed_frame, (x1, y1, w, h))
 
                         hist = calculate_histogram(processed_frame, bbox)
@@ -459,7 +460,7 @@ def pixel_video():
 
                         # Seuil de similarité pour considérer la région comme valide
                         print(f"similarity = {similarity}")
-                        if similarity < 0.8:
+                        if similarity < int(seuil_Entry.get()):
                             print(f"Tracker {i}  a perdu la cible, tentative de réinitialisation...")
                             reset_tracker(processed_frame, i, tracker_histograms[i])
                             # Option : marquer la boîte ou réinitialiser le tracker
@@ -647,28 +648,55 @@ def show_frame(image):
     label_video.config(image=img_tk)
     label_video.image = img_tk
 
+
+
 # Widgets de l'interface
 btn_load_video = tk.Button(root, text="Charger une vidéo", command=load_video)
 btn_load_video.pack()
 
-btn_procS_video = tk.Button(root, text="Traiter une vidéo (mélange)", command=shuffle_video)
-btn_procS_video.pack()
+frame0 = tk.Frame(root)
+frame0.pack(pady=5)  # Ajout d'un espacement vertical
 
-btn_procB_video = tk.Button(root, text="Traiter une vidéo (flou)", command=blur_video)
+btn_procB_video = tk.Button(frame0, text="Traiter une vidéo (flou)", command=blur_video)
 btn_procB_video.pack()
 
-btn_procP_video = tk.Button(root, text="Traiter une vidéo (pixel)", command=pixel_video)
+btn_procP_video = tk.Button(frame0, text="Traiter une vidéo (pixel)", command=pixel_video)
 btn_procP_video.pack()
 
-btn_procD_video = tk.Button(root, text="Déchiffrer un mélange", command=dechiffre)
+frame1 = tk.Frame(root)
+frame1.pack(pady=5)  # Ajout d'un espacement vertical
+
+btn_procS_video = tk.Button(frame1, text="Traiter une vidéo (mélange)", command=shuffle_video)
+btn_procS_video.pack()
+
+btn_procD_video = tk.Button(frame1, text="Déchiffrer un mélange", command=dechiffre)
 btn_procD_video.pack()
 
-user_Entry = Entry(root,bg="white")
-user = Label(root, text = "Numéro de la boîte")
-user.pack()
-user_Entry.pack() 
 
-c1 = tk.Checkbutton(root,
+
+frame2 = tk.Frame(root)
+frame2.pack(pady=5)
+
+user = tk.Label(frame2, text="Numéro boîte")
+user.pack(side=tk.LEFT, padx=5)  # Espacement horizontal
+user_Entry = tk.Entry(frame2, bg="white", width=5)  # Définir la largeur
+user_Entry.pack(side=tk.LEFT)
+
+# Deuxième ligne
+rafraiche = tk.Label(frame2, text="Taux vérif")
+rafraiche.pack(side=tk.LEFT, padx=5)
+rafraiche_Entry = tk.Entry(frame2, bg="white", width=5)
+rafraiche_Entry.pack(side=tk.LEFT)
+
+# Troisième ligne
+frame3 = tk.Frame(root)
+frame3.pack(pady=5)
+seuil = tk.Label(frame3, text="Seuil")
+seuil.pack(side=tk.LEFT, padx=5)
+seuil_Entry = tk.Entry(frame3, bg="white", width=5)
+seuil_Entry.pack(side=tk.LEFT)
+
+c1 = tk.Checkbutton(frame3,
                 text='Poursuite de cible',
                 variable=track,
                 onvalue= 1,
