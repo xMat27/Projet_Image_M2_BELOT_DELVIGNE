@@ -155,7 +155,7 @@ def shuffle_video():
 
                     # Seuil de similarité pour considérer la région comme valide
                     print(f"similarity = {similarity}")
-                    if similarity < int(seuil_Entry.get()):
+                    if similarity < float(seuil_Entry.get()):
                         print(f"Tracker {int(user_Entry.get())-1}  a perdu la cible, tentative de réinitialisation...")
                         reset_tracker(processed_frame, int(user_Entry.get())-1, tracker_histograms[int(user_Entry.get())-1])
                         # Option : marquer la boîte ou réinitialiser le tracker
@@ -164,13 +164,30 @@ def shuffle_video():
                         # Extraire la région d'intérêt
                         roi = processed_frame[y1:y2, x1:x2]
 
-                        # Mélanger les pixels dans la boîte détectée
+                        # Vérification du type
+                        assert processed_frame.dtype == np.uint8, "processed_frame doit être en uint8."
+
+                        # Mélanger les pixels dans la région
                         pixels = roi.reshape(-1, 3)
                         seed = 42  # Définir une graine
                         rng = np.random.default_rng(seed)
-                        permutation = rng.permutation(len(pixels))  # Générer une permutation
-                        pixels_mixed = pixels[permutation]          # Mélanger les pixels
-                        processed_frame[y1:y2, x1:x2] = pixels_mixed.reshape(roi.shape)
+
+                        # Générer et appliquer la permutation
+                        permutation = rng.permutation(len(pixels))
+                        pixels_mixed = pixels[permutation]
+
+                        # Remettre les pixels mélangés dans l'image
+                        roi_mixed = pixels_mixed.reshape(roi.shape)
+
+                        # Clip pour s'assurer que les valeurs sont dans les limites
+                        roi_mixed = np.clip(roi_mixed, 0, 255).astype(np.uint8)
+
+                        # Réinsérer dans l'image originale
+                        processed_frame[y1:y2, x1:x2] = roi_mixed
+
+                        # Validation des dimensions
+                        assert processed_frame[y1:y2, x1:x2].shape == roi.shape, "Erreur de forme après réinsertion."
+
                     video_boxes.append({"frame_counter": frame_counter, "boxes": frame_boxes})         
             else:
                 for i, tracker in enumerate(trackers):
@@ -188,7 +205,7 @@ def shuffle_video():
 
                         # Seuil de similarité pour considérer la région comme valide
                         print(f"similarity = {similarity}")
-                        if similarity < int(seuil_Entry.get()):
+                        if similarity < float(seuil_Entry.get()):
                             print(f"Tracker {i}  a perdu la cible, tentative de réinitialisation...")
                             reset_tracker(processed_frame, i, tracker_histograms[i])
                             # Option : marquer la boîte ou réinitialiser le tracker
@@ -249,10 +266,10 @@ def shuffle_video():
         show_frame(processed_frame)
         root.after(30, update_frameS)
         output_writer.write(processed_frame)
-        with open("video_boxes_coordinates.json", "w") as json_file:
+        with open(str(fichier_Entry.get()), "w") as json_file:
             json.dump(video_boxes, json_file, indent=4)
 
-        print("Coordonnées des boîtes pour toute la vidéo écrites dans 'video_boxes_coordinates.json'")
+        #print("Coordonnées des boîtes pour toute la vidéo écrites dans 'video_boxes_coordinates.json'")
     
     
 
@@ -310,7 +327,7 @@ def blur_video():
 
                     # Seuil de similarité pour considérer la région comme valide
                     print(f"similarity = {similarity}")
-                    if similarity < int(seuil_Entry.get()):
+                    if similarity < float(seuil_Entry.get()):
                         print(f"Tracker {int(user_Entry.get())-1}  a perdu la cible, tentative de réinitialisation...")
                         reset_tracker(processed_frame, int(user_Entry.get())-1, tracker_histograms[int(user_Entry.get())-1])
                         # Option : marquer la boîte ou réinitialiser le tracker
@@ -335,7 +352,7 @@ def blur_video():
 
                         # Seuil de similarité pour considérer la région comme valide
                         print(f"similarity = {similarity}")
-                        if similarity < int(seuil_Entry.get()):
+                        if similarity < float(seuil_Entry.get()):
                             print(f"Tracker {i}  a perdu la cible, tentative de réinitialisation...")
                             reset_tracker(processed_frame, i, tracker_histograms[i])
                             # Option : marquer la boîte ou réinitialiser le tracker
@@ -434,7 +451,7 @@ def pixel_video():
 
                     # Seuil de similarité pour considérer la région comme valide
                     print(f"similarity = {similarity}")
-                    if similarity < int(seuil_Entry.get()):
+                    if similarity < float(seuil_Entry.get()):
                         print(f"Tracker {int(user_Entry.get())-1}  a perdu la cible, tentative de réinitialisation...")
                         reset_tracker(processed_frame, int(user_Entry.get())-1, tracker_histograms[int(user_Entry.get())-1])
                         # Option : marquer la boîte ou réinitialiser le tracker
@@ -460,7 +477,7 @@ def pixel_video():
 
                         # Seuil de similarité pour considérer la région comme valide
                         print(f"similarity = {similarity}")
-                        if similarity < int(seuil_Entry.get()):
+                        if similarity < float(seuil_Entry.get()):
                             print(f"Tracker {i}  a perdu la cible, tentative de réinitialisation...")
                             reset_tracker(processed_frame, i, tracker_histograms[i])
                             # Option : marquer la boîte ou réinitialiser le tracker
@@ -523,6 +540,11 @@ def dechiffre():
     if not output_filepath:
         return
 
+
+    dechiffre_file = filedialog.asksaveasfilename(defaultextension=".json",
+                                                   filetypes=[("json files", "*.json")])
+    if not dechiffre_file:
+        return
     # Obtenir les propriétés de la vidéo
     frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -536,7 +558,7 @@ def dechiffre():
     video_boxes = []
     frame_counter = 0
 
-    with open("video_boxes_coordinates.json", "r") as json_file:
+    with open(dechiffre_file, "r") as json_file:
         data = json.load(json_file)
 
     def get_boxes_for_frame(frame_counter, data):
@@ -565,10 +587,17 @@ def dechiffre():
         for box in boxes:
             x1, y1, x2, y2 = box["x1"], box["y1"], box["x2"], box["y2"]
 
+            # Extraire la région d'intérêt
             roi = processed_frame[y1:y2, x1:x2]
-            # Mélange des pixels de la boîte (par exemple)
+
+            # Vérification du type
+            assert processed_frame.dtype == np.uint8, "L'image processed_frame doit être en uint8."
+
+            # Mélanger les pixels de la boîte
             pixels_mixed = roi.reshape(-1, 3)
-            seed = 42  # Définir une graine
+
+            # Définir une graine
+            seed = 42
             num_pixels = len(pixels_mixed)
 
             # Recréer la permutation originale avec la graine
@@ -582,7 +611,14 @@ def dechiffre():
             pixels_restored = pixels_mixed[inverse_permutation]
             roi_restored = pixels_restored.reshape(roi.shape)
 
-            processed_frame[(y1):(y2), (x1):(x2)] = roi_restored   
+            # Vérification des dimensions
+            assert roi_restored.shape == roi.shape, "Les dimensions de la région restaurée ne correspondent pas à celles d'origine."
+
+            # Clip pour garantir les valeurs valides
+            roi_restored = np.clip(roi_restored, 0, 255).astype(np.uint8)
+
+            # Réinsérer dans l'image d'origine
+            processed_frame[y1:y2, x1:x2] = roi_restored   
         show_frame(processed_frame)
         root.after(30, update_frameD)
         output_writer.write(processed_frame)
@@ -702,6 +738,13 @@ c1 = tk.Checkbutton(frame3,
                 onvalue= 1,
                 offvalue= 0)
 c1.pack()
+
+frame4 = tk.Frame(root)
+frame4.pack(pady=5)
+fichier = tk.Label(frame4, text="Fichier JSON")
+fichier.pack(side=tk.LEFT, padx=5)
+fichier_Entry = tk.Entry(frame4, bg="white", width=10)
+fichier_Entry.pack(side=tk.LEFT)
 
 # btn_save_video = tk.Button(root, text="Sauvegarder la vidéo", command=save_video)
 # btn_save_video.pack()
