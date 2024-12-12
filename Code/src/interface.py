@@ -17,7 +17,7 @@ model = YOLO("yolov10n-face.pt")  # Chargez un modèle YOLO compatible
 # Variables globales
 video_capture = None
 output_writer = None
-scale_factor = 1.1
+scale_factor = 1.0
 random_seed = 4
 frame = None
 processed_frame = None
@@ -114,6 +114,7 @@ def shuffle_video():
     frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(video_capture.get(cv2.CAP_PROP_FPS))
+    scale_factor = int(scale_Entry.get())
 
     # Initialiser VideoWriter
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -291,6 +292,7 @@ def blur_video():
     frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(video_capture.get(cv2.CAP_PROP_FPS))
+    scale_factor = int(scale_Entry.get())
 
     # Initialiser VideoWriter
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -419,6 +421,7 @@ def pixel_video():
     frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(video_capture.get(cv2.CAP_PROP_FPS))
+    scale_factor = int(scale_Entry.get())
 
     # Initialiser VideoWriter
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -731,6 +734,11 @@ seuil = tk.Label(frame3, text="Seuil")
 seuil.pack(side=tk.LEFT, padx=5)
 seuil_Entry = tk.Entry(frame3, bg="white", width=5)
 seuil_Entry.pack(side=tk.LEFT)
+
+scale = tk.Label(frame3, text="Taille boîte")
+scale.pack(side=tk.LEFT, padx=5)
+scale_Entry = tk.Entry(frame3, bg="white", width=5)
+scale_Entry.pack(side=tk.LEFT)
 
 c1 = tk.Checkbutton(frame3,
                 text='Poursuite de cible',
