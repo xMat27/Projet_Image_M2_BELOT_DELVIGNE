@@ -114,7 +114,7 @@ def shuffle_video():
     frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(video_capture.get(cv2.CAP_PROP_FPS))
-    scale_factor = int(scale_Entry.get())
+    scale_factor = float(scale_Entry.get())
 
     # Initialiser VideoWriter
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -126,6 +126,7 @@ def shuffle_video():
     def update_frameS():
         global frame, processed_frame,frame_counter
         ret, frame = video_capture.read()
+        seed = int(key_Entry.get())
         
         
         
@@ -155,7 +156,7 @@ def shuffle_video():
                     similarity = compare_histograms(tracker_histograms[int(user_Entry.get())-1], hist)
 
                     # Seuil de similarité pour considérer la région comme valide
-                    print(f"similarity = {similarity}")
+                    #print(f"similarity = {similarity}")
                     if similarity < float(seuil_Entry.get()):
                         print(f"Tracker {int(user_Entry.get())-1}  a perdu la cible, tentative de réinitialisation...")
                         reset_tracker(processed_frame, int(user_Entry.get())-1, tracker_histograms[int(user_Entry.get())-1])
@@ -170,7 +171,7 @@ def shuffle_video():
 
                         # Mélanger les pixels dans la région
                         pixels = roi.reshape(-1, 3)
-                        seed = 42  # Définir une graine
+                          # Définir une graine
                         rng = np.random.default_rng(seed)
 
                         # Générer et appliquer la permutation
@@ -205,7 +206,7 @@ def shuffle_video():
                         similarity = compare_histograms(tracker_histograms[i], hist)
 
                         # Seuil de similarité pour considérer la région comme valide
-                        print(f"similarity = {similarity}")
+                        #print(f"similarity = {similarity}")
                         if similarity < float(seuil_Entry.get()):
                             print(f"Tracker {i}  a perdu la cible, tentative de réinitialisation...")
                             reset_tracker(processed_frame, i, tracker_histograms[i])
@@ -215,7 +216,6 @@ def shuffle_video():
 
                             # Mélanger les pixels dans la boîte détectée
                             pixels = roi.reshape(-1, 3)
-                            seed = 42  # Définir une graine
                             rng = np.random.default_rng(seed)
                             permutation = rng.permutation(len(pixels))  # Générer une permutation
                             pixels_mixed = pixels[permutation]          # Mélanger les pixels
@@ -237,7 +237,6 @@ def shuffle_video():
                 roi = processed_frame[y1:y2, x1:x2]
                 # Mélange des pixels de la boîte (par exemple)
                 pixels = roi.reshape(-1, 3)
-                seed = 42  # Définir une graine
                 rng = np.random.default_rng(seed)
                 permutation = rng.permutation(len(pixels))  # Générer une permutation
                 pixels_mixed = pixels[permutation]          # Mélanger les pixels
@@ -258,7 +257,6 @@ def shuffle_video():
                     roi = processed_frame[y1:y2, x1:x2]
                     # Mélange des pixels de la boîte (par exemple)
                     pixels = roi.reshape(-1, 3)
-                    seed = 42  # Définir une graine
                     rng = np.random.default_rng(seed)
                     permutation = rng.permutation(len(pixels))  # Générer une permutation
                     pixels_mixed = pixels[permutation]          # Mélanger les pixels
@@ -292,7 +290,7 @@ def blur_video():
     frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(video_capture.get(cv2.CAP_PROP_FPS))
-    scale_factor = int(scale_Entry.get())
+    scale_factor = float(scale_Entry.get())
 
     # Initialiser VideoWriter
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -328,7 +326,7 @@ def blur_video():
                     similarity = compare_histograms(tracker_histograms[int(user_Entry.get())-1], hist)
 
                     # Seuil de similarité pour considérer la région comme valide
-                    print(f"similarity = {similarity}")
+                    #print(f"similarity = {similarity}")
                     if similarity < float(seuil_Entry.get()):
                         print(f"Tracker {int(user_Entry.get())-1}  a perdu la cible, tentative de réinitialisation...")
                         reset_tracker(processed_frame, int(user_Entry.get())-1, tracker_histograms[int(user_Entry.get())-1])
@@ -353,7 +351,7 @@ def blur_video():
                         similarity = compare_histograms(tracker_histograms[i], hist)
 
                         # Seuil de similarité pour considérer la région comme valide
-                        print(f"similarity = {similarity}")
+                        #print(f"similarity = {similarity}")
                         if similarity < float(seuil_Entry.get()):
                             print(f"Tracker {i}  a perdu la cible, tentative de réinitialisation...")
                             reset_tracker(processed_frame, i, tracker_histograms[i])
@@ -421,7 +419,7 @@ def pixel_video():
     frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(video_capture.get(cv2.CAP_PROP_FPS))
-    scale_factor = int(scale_Entry.get())
+    scale_factor = float(scale_Entry.get())
 
     # Initialiser VideoWriter
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -453,7 +451,7 @@ def pixel_video():
                     similarity = compare_histograms(tracker_histograms[int(user_Entry.get())-1], hist)
 
                     # Seuil de similarité pour considérer la région comme valide
-                    print(f"similarity = {similarity}")
+                    #print(f"similarity = {similarity}")
                     if similarity < float(seuil_Entry.get()):
                         print(f"Tracker {int(user_Entry.get())-1}  a perdu la cible, tentative de réinitialisation...")
                         reset_tracker(processed_frame, int(user_Entry.get())-1, tracker_histograms[int(user_Entry.get())-1])
@@ -479,7 +477,7 @@ def pixel_video():
                         similarity = compare_histograms(tracker_histograms[i], hist)
 
                         # Seuil de similarité pour considérer la région comme valide
-                        print(f"similarity = {similarity}")
+                        #print(f"similarity = {similarity}")
                         if similarity < float(seuil_Entry.get()):
                             print(f"Tracker {i}  a perdu la cible, tentative de réinitialisation...")
                             reset_tracker(processed_frame, i, tracker_histograms[i])
@@ -600,7 +598,7 @@ def dechiffre():
             pixels_mixed = roi.reshape(-1, 3)
 
             # Définir une graine
-            seed = 42
+            seed = int(key_Entry.get())
             num_pixels = len(pixels_mixed)
 
             # Recréer la permutation originale avec la graine
@@ -720,6 +718,11 @@ user = tk.Label(frame2, text="Numéro boîte")
 user.pack(side=tk.LEFT, padx=5)  # Espacement horizontal
 user_Entry = tk.Entry(frame2, bg="white", width=5)  # Définir la largeur
 user_Entry.pack(side=tk.LEFT)
+
+key = tk.Label(frame2, text="Clef")
+key.pack(side=tk.LEFT, padx=5)  # Espacement horizontal
+key_Entry = tk.Entry(frame2, bg="white", width=5)  # Définir la largeur
+key_Entry.pack(side=tk.LEFT)
 
 # Deuxième ligne
 rafraiche = tk.Label(frame2, text="Taux vérif")
